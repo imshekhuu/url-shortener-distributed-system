@@ -1,0 +1,22 @@
+.env
+.venv/
+regvenv/
+__pycache__/
+node_modules
+<<<<<<< HEAD
+=======
+
+>>>>>>> bf6eea21bda7d31e08f9b90adc4111e1fc8cb39a
+# python cache
+__pycache__/
+*.pyc
+
+# logs
+logs/
+
+# jupyter
+.ipynb_checkpoints
+
+# OS
+.DS_Store
+Thumbs.db
