@@ -4,6 +4,7 @@ declare const settingConfig: {
         port: number;
     };
     POSTGRESQL: {
+        enabled: boolean;
         host: string;
         port: number;
         database: string;

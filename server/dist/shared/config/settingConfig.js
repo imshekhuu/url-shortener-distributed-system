@@ -4,9 +4,12 @@ const settingConfig = {
         port: parseInt(process.env.MONGO_PORT || "27017"),
     },
     POSTGRESQL: {
+        enabled: process.env.POSTGRES_ENABLED === "true",
         host: process.env.POSTGRES_HOST || "localhost",
         port: parseInt(process.env.POSTGRES_PORT || "5432"),
-        database: process.env.POSTGRES_DB || "url_shortener",
+        database: process.env.POSTGRES_DB ||
+            process.env.POSTGRES_DATABASE ||
+            "url_shortener",
         user: process.env.POSTGRES_USER || "postgres",
         password: process.env.POSTGRES_PASSWORD || "password",
     },

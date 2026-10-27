@@ -1,9 +1,11 @@
 import express, {} from "express";
 import routes from "../routes/apiRoute.js";
+import morgan from "morgan";
 const app = express();
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(morgan("combined"));
 // Health check
 app.get("/health", (_req, res) => {
     res.status(200).json({
@@ -11,7 +13,8 @@ app.get("/health", (_req, res) => {
         message: "URL Shortener API is running",
     });
 });
-// route 
+// API routes
+app.use("/api", routes);
 app.use("/api/v1", routes);
 // Global error handler
 const errorHandler = (error, _req, res, _next) => {

@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { createShortUrlWithoutUser } from "../repository/shortUrlRepository.js";   
 import { validateUrl } from "../validator/urlValidator.js";
 

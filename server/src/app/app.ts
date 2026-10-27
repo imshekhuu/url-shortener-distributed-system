@@ -1,11 +1,13 @@
 import express, { type ErrorRequestHandler } from "express";
 import routes from "../routes/apiRoute.js";
+import morgan from "morgan";
 
 const app = express();
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(morgan("combined"));
 
 // Health check
 app.get("/health", (_req, res) => {
@@ -15,7 +17,8 @@ app.get("/health", (_req, res) => {
   });
 });
 
-// route 
+// API routes
+app.use("/api", routes);
 app.use("/api/v1", routes)
 
 // Global error handler

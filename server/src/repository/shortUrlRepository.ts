@@ -1,5 +1,5 @@
 import generateShortUrl from "../utils/generateCode.js";
-import shortUrlModel from "../model/shortUrlModel.js";
+import postgresDb from "../shared/Connections/postgresDb.js";
 
 /**
  * Create a short URL without a user ID.
@@ -10,36 +10,56 @@ import shortUrlModel from "../model/shortUrlModel.js";
 const createShortUrlWithoutUser = async (
   fullUrl: string,
 ): Promise<{ message: string; shortUrl: string }> => {
-  // Check if the full URL already exists in the database
+  const pool = postgresDb.getConnection();
+  if (!pool) {
+    throw new Error(
+      "PostgreSQL is not connected. Set POSTGRES_ENABLED=true and configure PostgreSQL credentials.",
+    );
+  }
 
-  const existingShortUrl = await shortUrlModel.findOne({ full: fullUrl });
-  if (existingShortUrl) {
+  const existingShortUrl = await pool.query<{ short_code: string }>(
+    "SELECT short_code FROM short_urls WHERE full_url = $1",
+    [fullUrl],
+  );
+  if (existingShortUrl.rows[0]) {
     return {
       message: "Short URL already exists",
-      shortUrl: existingShortUrl.short,
+      shortUrl: existingShortUrl.rows[0].short_code,
     };
   }
 
-  // Generate a unique short code
-  const shortCode = await generateShortUrl(6);
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const shortCode = await generateShortUrl(6);
+    const result = await pool.query<{ short_code: string }>(
+      `
+        INSERT INTO short_urls (full_url, short_code)
+        VALUES ($1, $2)
+        ON CONFLICT DO NOTHING
+        RETURNING short_code
+      `,
+      [fullUrl, shortCode],
+    );
 
-  try {
-    // Create a new short URL document
-    const newShortUrl = new shortUrlModel({
-      full: fullUrl,
-      short: shortCode,
-      clicks: 0,
-    });
-    await newShortUrl.save();
+    if (result.rows[0]) {
+      return {
+        message: "Short URL created successfully",
+        shortUrl: result.rows[0].short_code,
+      };
+    }
 
-    return {
-      message: "Short URL created successfully",
-      shortUrl: newShortUrl.short,
-    };
-  } catch (error) {
-    console.error("Error creating short URL:", error);
-    throw new Error("Failed to create short URL");
+    const existing = await pool.query<{ short_code: string }>(
+      "SELECT short_code FROM short_urls WHERE full_url = $1",
+      [fullUrl],
+    );
+    if (existing.rows[0]) {
+      return {
+        message: "Short URL already exists",
+        shortUrl: existing.rows[0].short_code,
+      };
+    }
   }
+
+  throw new Error("Failed to generate a unique short URL code");
 };
 
 // const createShortUrlWithUser = async (

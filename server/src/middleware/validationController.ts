@@ -1,4 +1,4 @@
-import { validateUrl } from "../validator/urlValidator";
+import { validateUrl } from "../validator/urlValidator.js";
 
 const validateUrlMiddleware = async (req: any, res: any, next: any) => {
   const { fullUrl } = req.body;
