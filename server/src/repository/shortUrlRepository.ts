@@ -1,36 +1,47 @@
-import shortUrl from "../model/shortUrlModel.js";
+import generateShortUrl from "../utils/generateCode.js";
+import shortUrlModel from "../model/shortUrlModel.js";
 
-export const saveShortUrl = async (
-  code: string,
-  url: string,
-  userId?: string,
-) => {
+/**
+ * Create a short URL without a user ID.
+ * @param {string} fullUrl - The full URL to be shortened.
+ * @param {string} userId - The user ID associated with the short URL.  
+ * @returns {Promise<{message: string, shortUrl: string}>} - The generated short URL.
+ */
+const createShortUrlWithoutUser = async (
+  fullUrl: string,
+): Promise<{ message: string; shortUrl: string }> => {
+  // Check if the full URL already exists in the database
+
+  const existingShortUrl = await shortUrlModel.findOne({ full: fullUrl });
+  if (existingShortUrl) {
+    return {
+      message: "Short URL already exists",
+      shortUrl: existingShortUrl.short,
+    };
+  }
+
+  // Generate a unique short code
+  const shortCode = await generateShortUrl(6);
+
   try {
-    const newShortUrl = new shortUrl({
-      full_url: url,
-      short_url: code,
+    // Create a new short URL document
+    const newShortUrl = new shortUrlModel({
+      full: fullUrl,
+      short: shortCode,
+      clicks: 0,
     });
-
-    if (userId) {
-      newShortUrl.user = userId;
-    }
-
     await newShortUrl.save();
-    return newShortUrl;
+
+    return {
+      message: "Short URL created successfully",
+      shortUrl: newShortUrl.short,
+    };
   } catch (error) {
-    console.error("Error saving short URL:", error);
-    throw error;
+    console.error("Error creating short URL:", error);
+    throw new Error("Failed to create short URL");
   }
 };
 
-export const getShortUrl = async (code: string) => {
-  return await shortUrl.findOneAndUpdate(
-    { short_url: code },
-    { $inc: { clicks: 1 } },
-    { new: true },
-  );
-};
+// const createShortUrlWithUser = async (
 
-export const getCustomShortUrl = async (slug: string) => {
-  return await shortUrl.findOne({ short_url: slug });
-};
+export { createShortUrlWithoutUser };

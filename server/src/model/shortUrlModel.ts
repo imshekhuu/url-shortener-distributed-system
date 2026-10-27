@@ -1,28 +1,38 @@
 import mongoose from "mongoose";
 
-const shortUrlSchema = new mongoose.Schema({
+export interface IShortUrl extends Document {
+  full: string;
+  userId?: mongoose.Types.ObjectId;
+  short: string;
+  clicks: number;
+}
 
-  full_url: {
-    type: String,
-    required: true,
+const shortUrlSchema = new mongoose.Schema<IShortUrl>(
+  {
+    full: {
+      type: String,
+      required: true,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    short: {
+      type: String,
+      required: true,
+    },
+    clicks: {
+      type: Number,
+      default: 0,
+    },
   },
-  short_url: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true,
-  },
-  clicks: {
-    type: Number,
-    required: true,
-    default: 0,
-  },
-  user:{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-  }
-});
+  { timestamps: true },
+);
 
-const shortUrl = mongoose.model("shortUrl", shortUrlSchema);
+const ShortUrl = mongoose.model("ShortUrl", shortUrlSchema);
 
-export default shortUrl;
+if (!ShortUrl) {
+  throw new Error("ShortUrl model is not defined");
+}
+
+export default ShortUrl;

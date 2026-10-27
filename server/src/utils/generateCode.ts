@@ -1,4 +1,4 @@
-async function generateCode() {
+async function generateCode(length: number): Promise<string> {
   // Implementation for generating a unique code
 
   const codeRequired =
@@ -6,7 +6,7 @@ async function generateCode() {
 
   let code = "";
 
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < length; i++) {
     const randomIndex = Math.floor(Math.random() * codeRequired.length);
     code += codeRequired[randomIndex];
   }
