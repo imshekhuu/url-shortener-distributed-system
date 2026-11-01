@@ -1,6 +1,4 @@
 import "dotenv/config";
-import routes from "./routes/apiRoute.js";
-import morgan from "morgan";
 import app from "./app/app.js";
 import mongoConnection from "./shared/Connections/mongoDb.js";
 import postgresDb from "./shared/Connections/postgresDb.js";

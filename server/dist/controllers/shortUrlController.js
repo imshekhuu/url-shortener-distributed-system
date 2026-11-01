@@ -1,4 +1,4 @@
-import { createShortUrlWithoutUser } from "../repository/shortUrlRepository.js";
+import { createShortUrlWithoutUser, findMainUrlByShortCode, createShortUrlWithUser as createShortUrlForUser, } from "../repository/shortUrlRepository.js";
 import { validateUrl } from "../validator/urlValidator.js";
 /**
  * Controller function to handle the retrieval of a short URL.
@@ -11,7 +11,7 @@ async function createShortUrlwithoutUser(req, res) {
     //   short: string;
     //   clicks: number;
     const { fullUrl } = req.body;
-    if (!fullUrl) {
+    if (typeof fullUrl !== "string" || !fullUrl.trim()) {
         return res.status(400).json({ message: "No data provided" });
     }
     const isUrlValid = await validateUrl(fullUrl);
@@ -19,7 +19,7 @@ async function createShortUrlwithoutUser(req, res) {
         return res.status(400).json({ message: "Invalid URL" });
     }
     try {
-        const result = await createShortUrlWithoutUser(fullUrl);
+        const result = await createShortUrlWithoutUser(fullUrl.trim());
         return res.status(200).json(result);
     }
     catch (error) {
@@ -28,5 +28,47 @@ async function createShortUrlwithoutUser(req, res) {
     }
 }
 ;
-export { createShortUrlwithoutUser };
+/**
+ * Controller function to handle the redirection of a short URL.
+ * @param req - The Express request object.
+ * @param res - The Express response object.
+ */
+async function redirectShortUrl(req, res) {
+    const { shortCode } = req.params;
+    if (!shortCode) {
+        return res.status(400).json({ message: "Short code is required" });
+    }
+    try {
+        const fullUrl = await findMainUrlByShortCode(shortCode.toString());
+        if (!fullUrl) {
+            return res.status(404).json({ message: "Short URL not found" });
+        }
+        return res.redirect(fullUrl);
+    }
+    catch (error) {
+        console.error("Error redirecting short URL:", error);
+        return res.status(500).json({ message: "Failed to redirect short URL" });
+    }
+}
+;
+async function createShortUrlWithUser(req, res) {
+    const { fullUrl } = req.body;
+    if (typeof fullUrl !== "string" || !fullUrl.trim()) {
+        return res.status(400).json({ message: "No data provided" });
+    }
+    const isUrlValid = await validateUrl(fullUrl);
+    if (!isUrlValid) {
+        return res.status(400).json({ message: "Invalid URL" });
+    }
+    try {
+        const result = await createShortUrlForUser(fullUrl.trim());
+        return res.status(200).json(result);
+    }
+    catch (error) {
+        console.error("Error creating short URL:", error);
+        return res.status(500).json({ message: "Failed to create short URL" });
+    }
+}
+;
+export { createShortUrlwithoutUser, redirectShortUrl, createShortUrlWithUser };
 //# sourceMappingURL=shortUrlController.js.map

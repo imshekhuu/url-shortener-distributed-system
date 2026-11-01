@@ -1,5 +1,9 @@
+import { randomInt } from "node:crypto";
+
 async function generateCode(length: number): Promise<string> {
-  // Implementation for generating a unique code
+  if (!Number.isInteger(length) || length <= 0) {
+    throw new Error("Code length must be a positive integer");
+  }
 
   const codeRequired =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -7,7 +11,7 @@ async function generateCode(length: number): Promise<string> {
   let code = "";
 
   for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * codeRequired.length);
+    const randomIndex = randomInt(codeRequired.length);
     code += codeRequired[randomIndex];
   }
 

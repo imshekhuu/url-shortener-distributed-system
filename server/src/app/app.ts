@@ -19,7 +19,7 @@ app.get("/health", (_req, res) => {
 
 // API routes
 app.use("/api", routes);
-app.use("/api/v1", routes)
+app.use("/api/v1", routes);
 
 // Global error handler
 const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {

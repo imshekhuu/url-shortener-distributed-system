@@ -12,12 +12,14 @@ declare const settingConfig: {
         password: string;
     };
     AUTH: {
-        jwtSecret: string;
-        AccessTokenExpiry: string;
-        RefreshTokenExpiry: string;
         AccessTokenCookieName: string;
         RefreshTokenCookieName: string;
+        ACCESS_TOKEN_SECRET: string;
+        REFRESH_TOKEN_SECRET: string;
+        ACCESS_TOKEN_EXPIRATION: string;
+        REFRESH_TOKEN_EXPIRATION: string;
     };
+    SERVER: {};
     GOOGLE_AUTH: {
         clientId: string;
         clientSecret: string;

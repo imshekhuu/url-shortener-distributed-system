@@ -1,10 +1,17 @@
-const validateUrl = async (url: string): Promise<boolean> => {
-  const urlPattern = new RegExp(
-    "^(https?:\\/\\/)?" + // protocol
-    "([\\da-z\\.-]+)\\.([a-z]{2,})" + // domain
-    "([^\\s]*)$" // path
-  );
-  return urlPattern.test(url);
+const validateUrl = async (url: unknown): Promise<boolean> => {
+  if (typeof url !== "string" || !url.trim()) {
+    return false;
+  }
+
+  try {
+    const parsedUrl = new URL(url.trim());
+    return (
+      (parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:") &&
+      parsedUrl.hostname.length > 0
+    );
+  } catch {
+    return false;
+  }
 };
 
 

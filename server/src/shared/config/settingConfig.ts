@@ -18,13 +18,16 @@ const settingConfig = {
     password: process.env.POSTGRES_PASSWORD || "password",
   },
   AUTH: {
-    jwtSecret: process.env.JWT_SECRET || "your_jwt_secret",
-    AccessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY || "15m",
-    RefreshTokenExpiry: process.env.REFRESH_TOKEN_EXPIRY || "7d",
     AccessTokenCookieName:
       process.env.ACCESS_TOKEN_COOKIE_NAME || "access_token",
     RefreshTokenCookieName:
       process.env.REFRESH_TOKEN_COOKIE_NAME || "refresh_token",
+      ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET || "",
+      REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET || "",
+      ACCESS_TOKEN_EXPIRATION: process.env.ACCESS_TOKEN_EXPIRATION || "15m",
+      REFRESH_TOKEN_EXPIRATION: process.env.REFRESH_TOKEN_EXPIRATION || "7d",
+  },
+  SERVER: {
   },
   GOOGLE_AUTH: {
     clientId: process.env.GOOGLE_CLIENT_ID || "your_google_client_id",

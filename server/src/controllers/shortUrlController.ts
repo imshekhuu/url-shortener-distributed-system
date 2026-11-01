@@ -1,5 +1,9 @@
 import type { Request, Response } from "express";
-import { createShortUrlWithoutUser, findMainUrlByShortCode } from "../repository/shortUrlRepository.js";   
+import {
+    createShortUrlWithoutUser,
+    findMainUrlByShortCode,
+    createShortUrlWithUser as createShortUrlForUser,
+} from "../repository/shortUrlRepository.js";
 import { validateUrl } from "../validator/urlValidator.js";
 
 
@@ -15,9 +19,9 @@ async function createShortUrlwithoutUser(req: Request, res: Response) {
     //   short: string;
     //   clicks: number;
 
-    const {fullUrl} = req.body;
+    const { fullUrl } = req.body as { fullUrl?: unknown };
 
-    if(!fullUrl) {
+    if(typeof fullUrl !== "string" || !fullUrl.trim()) {
         return res.status(400).json({ message: "No data provided" });
     }
 
@@ -28,7 +32,7 @@ async function createShortUrlwithoutUser(req: Request, res: Response) {
 
     try {
 
-        const result = await createShortUrlWithoutUser(fullUrl);
+        const result = await createShortUrlWithoutUser(fullUrl.trim());
 
         return res.status(200).json(result);
 
@@ -69,4 +73,31 @@ async function redirectShortUrl(req: Request, res: Response) {
 
 };
 
-export { createShortUrlwithoutUser, redirectShortUrl };
+
+async function createShortUrlWithUser(req: Request, res: Response): Promise<Response> {
+
+    const { fullUrl } = req.body as { fullUrl?: unknown };
+
+    if(typeof fullUrl !== "string" || !fullUrl.trim()) {
+        return res.status(400).json({ message: "No data provided" });
+    }
+
+    const isUrlValid = await validateUrl(fullUrl);
+    if (!isUrlValid) {
+        return res.status(400).json({ message: "Invalid URL" });
+    }
+
+    try {
+
+        const result = await createShortUrlForUser(fullUrl.trim());
+
+        return res.status(200).json(result);
+
+    } catch (error) {
+        console.error("Error creating short URL:", error);
+        return res.status(500).json({ message: "Failed to create short URL" });
+    }
+
+};
+
+export { createShortUrlwithoutUser, redirectShortUrl, createShortUrlWithUser };

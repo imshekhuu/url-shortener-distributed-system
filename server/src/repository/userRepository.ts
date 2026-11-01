@@ -55,11 +55,6 @@ const createUser = async (userData: Partial<IUser>): Promise<CreatedUser> => {
       throw new Error("Password must be at least 6 characters long.");
     }
 
-    // A local account must have a verification token and expiry
-    // if your registration flow requires email verification.
-    if (!emailVerificationToken || !emailVerificationExpires) {
-      throw new Error("Email verification token and expiry are required.");
-    }
   }
 
   // 4. Google authentication requires a Google account ID.

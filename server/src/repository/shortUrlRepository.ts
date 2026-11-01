@@ -90,9 +90,11 @@ const findMainUrlByShortCode = async (
   try {
     // 4. Query the database.
     const result = await pool.query<{ fullUrl: string }>(
-      `SELECT full_url AS "fullUrl"
-             FROM short_urls
-             WHERE short_code = $1`,
+      `UPDATE short_urls
+       SET clicks = clicks + 1, updated_at = NOW()
+       WHERE short_code = $1
+       RETURNING full_url AS "fullUrl"
+      `,
       [shortCode],
     );
 
@@ -113,4 +115,65 @@ const findMainUrlByShortCode = async (
   }
 };
 
-export { findMainUrlByShortCode, createShortUrlWithoutUser };
+
+/** * Create a short URL with a user ID.
+ * @param {string} url - The full URL to be shortened.
+ * @returns The generated short URL, or an already-existing URL response.
+ */
+const createShortUrlWithUser = async (
+  url: string,
+): Promise<{ message: string; shortUrl: string }> => {
+  const pool = postgresDb.getConnection();
+  if (!pool) {
+    throw new Error(
+      "PostgreSQL is not connected. Set POSTGRES_ENABLED=true and configure PostgreSQL credentials.",
+    );
+  }
+
+  const existingShortUrl = await pool.query<{ short_code: string }>(
+    "SELECT short_code FROM short_urls WHERE full_url = $1",
+    [url],
+  );
+
+  if (existingShortUrl.rows[0]) {
+    return {
+      message: "Short URL already exists",
+      shortUrl: existingShortUrl.rows[0].short_code,
+    };
+  }
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const shortCode = await generateShortUrl(6);
+    const result = await pool.query<{ short_code: string }>(
+      `
+        INSERT INTO short_urls (full_url, short_code)
+        VALUES ($1, $2)
+        ON CONFLICT DO NOTHING
+        RETURNING short_code
+      `,
+      [url, shortCode],
+    );
+
+    if (result.rows[0]) {
+      return {
+        message: "Short URL created successfully",
+        shortUrl: result.rows[0].short_code,
+      };
+    }
+
+    const existing = await pool.query<{ short_code: string }>(
+      "SELECT short_code FROM short_urls WHERE full_url = $1",
+      [url],
+    );
+
+    if (existing.rows[0]) {
+      return {
+        message: "Short URL already exists",
+        shortUrl: existing.rows[0].short_code,
+      };
+    }
+  }
+  throw new Error("Failed to generate a unique short URL code");
+};
+
+export { findMainUrlByShortCode, createShortUrlWithoutUser, createShortUrlWithUser };
