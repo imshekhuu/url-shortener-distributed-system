@@ -1,18 +1,14 @@
-import {producer} from "../shared/config/kafka.js";
+import { producer } from "../shared/config/kafka.js";
 
-async function producerConnect() {
-  try {
-    await producer.connect();
-    console.log("Kafka producer connected successfully");
-  } catch (error) {
-    console.error("Error connecting Kafka producer:", error);
-  }
+async function producerConnect(): Promise<void> {
+  await producer.connect();
+  console.log("Kafka producer connected successfully");
 }
 
-
-
-async function sendMessage(event: { shortUrl: string }, data: any){
-
+async function sendMessage(
+  event: { shortUrl: string },
+  data: Record<string, unknown>,
+): Promise<void> {
     await producer.send({
         topic: "click-events",
         messages: [
@@ -22,8 +18,9 @@ async function sendMessage(event: { shortUrl: string }, data: any){
             },
         ],
     });
-
-    console.log(`Message sent to Kafka topic 'click-events': ${event} - ${JSON.stringify(data)}`);
+    console.log(
+      `Message sent to Kafka topic 'click-events': ${event.shortUrl} - ${JSON.stringify(data)}`,
+    );
 }
 
 

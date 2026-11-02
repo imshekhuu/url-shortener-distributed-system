@@ -1,8 +1,14 @@
 import postgresDb from "../shared/Connections/postgresDb.js";
-import { sendMessage } from "../producers/clickProducer.js";
-import { randomUUID } from "crypto";
 
-async function processClickEvent(event: { shortCode: string; eventId: string; clickedAt: string; referer: string | null; userAgent: string | null }) {
+interface ClickEvent {
+    shortCode: string;
+    eventId: string;
+    clickedAt: string;
+    referer: string | null;
+    userAgent: string | null;
+}
+
+async function processClickEvent(event: ClickEvent): Promise<void> {
 
     const pool = postgresDb.getConnection();      
     if (!pool) {
@@ -38,7 +44,13 @@ async function processClickEvent(event: { shortCode: string; eventId: string; cl
         );
 
         // 2. Increment only if this is a new event
-        if (result.rowCount > 0) {
+        if ((result.rowCount ?? 0) > 0) {
+            await client.query(
+                `UPDATE short_urls
+                 SET clicks = clicks + 1, updated_at = NOW()
+                 WHERE short_code = $1`,
+                [event.shortCode],
+            );
 
             await client.query(
                 `

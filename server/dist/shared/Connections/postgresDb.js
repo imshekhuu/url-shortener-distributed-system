@@ -33,6 +33,22 @@ class PostgresConnection {
           updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
       `);
+            await pool.query(`
+        CREATE TABLE IF NOT EXISTS click_events (
+          event_id UUID PRIMARY KEY,
+          short_code VARCHAR(32) NOT NULL REFERENCES short_urls(short_code),
+          clicked_at TIMESTAMPTZ NOT NULL,
+          referer TEXT,
+          user_agent TEXT
+        )
+      `);
+            await pool.query(`
+        CREATE TABLE IF NOT EXISTS url_stats (
+          short_code VARCHAR(32) PRIMARY KEY REFERENCES short_urls(short_code),
+          total_clicks INTEGER NOT NULL DEFAULT 0 CHECK (total_clicks >= 0),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
             this.pool = pool;
             console.log(`PostgreSQL connected: ${config.POSTGRESQL.database}`);
             pool.on("error", (err) => {

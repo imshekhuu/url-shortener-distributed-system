@@ -1,15 +1,13 @@
 import type { Request, Response } from "express";
 import {
   createShortUrlWithoutUser,
-  findMainUrlByShortCode,
   createShortUrlWithUser as createShortUrlForUser,
 } from "../repository/shortUrlRepository.js";
 import { validateUrl } from "../validator/urlValidator.js";
 import { redis } from "../shared/config/redis.js";
 import { sendMessage } from "../producers/clickProducer.js";
-import PostgresConnection from "../shared/Connections/postgresDb.js";
 import postgresDb from "../shared/Connections/postgresDb.js";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 /**
  * Controller function to handle the retrieval of a short URL.
@@ -52,61 +50,46 @@ async function createShortUrlwithoutUser(req: Request, res: Response) {
 async function redirectShortUrl(req: Request, res: Response) {
   const { shortCode } = req.params;
 
-  if (!shortCode) {
+  if (typeof shortCode !== "string" || !shortCode) {
     return res.status(400).json({
       message: "Short code is required",
     });
   }
 
-  const pool = postgresDb.getConnection();
-
-  if (!pool) {
-    throw new Error("PostgreSQL is not connected. Set POSTGRES_ENABLED=true.");
-  }
-
   try {
     let originalUrl = await redis.get(`url:${shortCode}`);
 
-    // 1. Redis cache hit
-    if (originalUrl) {
-      console.log("Redis Cache HIT");
+    if (!originalUrl) {
+      const pool = postgresDb.getConnection();
+      if (!pool) {
+        throw new Error(
+          "PostgreSQL is not connected. Set POSTGRES_ENABLED=true.",
+        );
+      }
 
-      return res.redirect(originalUrl);
+      const result = await pool.query<{ full_url: string }>(
+        "SELECT full_url FROM short_urls WHERE short_code = $1",
+        [shortCode],
+      );
+
+      if (!result.rows[0]) {
+        return res.status(404).json({ message: "URL not found" });
+      }
+
+      originalUrl = result.rows[0].full_url;
+      await redis.set(`url:${shortCode}`, originalUrl, "EX", 3600);
     }
-
-    // 2. Redis cache miss -> PostgreSQL
-    console.log("Redis Cache MISS");
-
-    const result = await pool.query(
-      `SELECT original_url
-             FROM urls
-             WHERE short_code = $1`,
-      [shortCode],
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        message: "URL not found",
-      });
-    }
-
-    originalUrl = result.rows[0].original_url;
-
-    // 3. Store the result in Redis
-    await redis.set(`url:${shortCode}`, originalUrl, "EX", 3600);
-
 
     const clickEvent = {
-        eventId: randomUUID(),
-        shortUrl: shortCode,
-        clickedAt: new Date().toISOString(),
-        referrer: req.get("Referrer") || null,
-        userAgent: req.get("User-Agent") || null,
+      eventId: randomUUID(),
+      shortCode,
+      clickedAt: new Date().toISOString(),
+      referer: req.get("Referer") || null,
+      userAgent: req.get("User-Agent") || null,
     };
 
-    await sendMessage({ shortUrl: shortCode.toString() }, clickEvent);
+    await sendMessage({ shortUrl: shortCode }, clickEvent);
 
-    // 4. Redirect
     return res.redirect(originalUrl);
   } catch (error) {
     console.error("Error redirecting short URL:", error);
@@ -143,7 +126,3 @@ async function createShortUrlWithUser(
 }
 
 export { createShortUrlwithoutUser, redirectShortUrl, createShortUrlWithUser };
-        function randomUUID() {
-            throw new Error("Function not implemented.");
-        }
-

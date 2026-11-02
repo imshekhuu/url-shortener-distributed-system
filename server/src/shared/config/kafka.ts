@@ -2,11 +2,15 @@ import { Kafka } from "kafkajs";
 
 const kafka = new Kafka({
   clientId: "url-service",
-  brokers: [process.env.KAFKA_BROKER],
+  brokers: [process.env.KAFKA_BROKER || "localhost:9092"],
 });
 
 const producer = kafka.producer({
-  allowAutoTopicCreation: false,
+  allowAutoTopicCreation: true,
 });
 
-export { producer, kafka };
+const consumer = kafka.consumer({
+  groupId: process.env.KAFKA_CONSUMER_GROUP || "url-shortener-clicks",
+});
+
+export { producer, consumer, kafka };

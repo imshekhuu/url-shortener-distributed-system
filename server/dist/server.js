@@ -3,9 +3,14 @@ import app from "./app/app.js";
 import mongoConnection from "./shared/Connections/mongoDb.js";
 import postgresDb from "./shared/Connections/postgresDb.js";
 import config from "./shared/config/settingConfig.js";
+import { producerConnect } from "./producers/clickProducer.js";
+import { log } from "node:console";
 const PORT = Number(process.env.PORT) || 3000;
 async function startServer() {
     try {
+        // Connect to Kafka producer
+        await producerConnect();
+        log("Kafka producer connected successfully");
         // Connect to MongoDB first
         await mongoConnection.connect();
         if (config.POSTGRESQL.enabled) {
