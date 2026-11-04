@@ -10,7 +10,7 @@ const urlRoute = Router();
 
 // Define your URL routes here
 urlRoute.post("/createUrlWithoutUser", createShortUrlwithoutUser); // Example route for creating a short URL without user authentication
-urlRoute.post("/createUrl", authMiddleware, createShortUrlWithUser);
+urlRoute.post("/createUrlwithUser", authMiddleware, createShortUrlWithUser);
 urlRoute.get("/:shortCode", redirectShortUrl);
 
 export default urlRoute;
